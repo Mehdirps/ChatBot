@@ -1,22 +1,18 @@
 import OpenAI from "openai";
+import { Project, Task, Sprint, TeamMember } from './models.js';
 
 class ProjectManagementBot {
     constructor(apiKey) {
         this.client = new OpenAI({
             apiKey: apiKey
         });
-        
-        this.context = {
-            projects: new Map(),
-            teams: new Map(),
-            currentSprint: null
-        };
+
     }
 
     async generateResponse(prompt) {
         try {
             const response = await this.client.chat.completions.create({
-                model: "gpt-4o",   
+                model: "gpt-4o",
                 max_tokens: 1000,
                 temperature: 0.7,
                 messages: [
@@ -24,25 +20,21 @@ class ProjectManagementBot {
                     { role: "user", content: prompt }
                 ]
             });
-            
-            return response.choices[0].message;
+            return response.choices[0].message.content;
         } catch (error) {
-            console.error('Erreur lors de la génération de la réponse:', error);
+            console.error('Erreur lors de la génération de la réponse:', error.response ? error.response.data : error.message);
             throw error;
         }
-      }
+    }
 
     async createProject(projectName, description) {
         try {
-            const project = {
-                description,
-                tasks: [],
-                sprints: [],
-                teamMembers: [],
-                createdAt: new Date().toISOString()
-            };
+            const project = new Project({
+                name: projectName,
+                description
+            });
 
-            this.context.projects.set(projectName, project);
+            await project.save();
 
             const prompt = `Un nouveau projet '${projectName}' a été créé avec la description : ${description}. Peux-tu suggérer les prochaines étapes pour bien démarrer ce projet?`;
             const response = await this.generateResponse(prompt);
@@ -50,7 +42,7 @@ class ProjectManagementBot {
             return {
                 status: 'success',
                 project,
-                nextSteps: response.content
+                nextSteps: response
             };
         } catch (error) {
             return {
@@ -62,22 +54,22 @@ class ProjectManagementBot {
 
     async addTask(projectName, taskTitle, description, assignee = null, priority = 'medium') {
         try {
-            const project = this.context.projects.get(projectName);
+            const project = await Project.findOne({ name: projectName });
             if (!project) {
                 throw new Error('Projet non trouvé');
             }
 
-            const task = {
-                id: project.tasks.length + 1,
+            const task = new Task({
+                project: projectName,
                 title: taskTitle,
                 description,
-                status: 'todo',
                 assignee,
-                priority,
-                createdAt: new Date().toISOString()
-            };
+                priority
+            });
 
             project.tasks.push(task);
+            await project.save();
+            await task.save();
 
             const prompt = `Une nouvelle tâche '${taskTitle}' a été créée pour le projet '${projectName}'. ${
                 assignee ? `Assignée à ${assignee}` : 'Non assignée'
@@ -100,21 +92,21 @@ class ProjectManagementBot {
 
     async createSprint(projectName, sprintName, startDate, endDate) {
         try {
-            const project = this.context.projects.get(projectName);
+            const project = await Project.findOne({ name: projectName });
             if (!project) {
                 throw new Error('Projet non trouvé');
             }
 
-            const sprint = {
+            const sprint = new Sprint({
+                project: projectName,
                 name: sprintName,
                 startDate,
-                endDate,
-                tasks: [],
-                status: 'planning'
-            };
+                endDate
+            });
 
             project.sprints.push(sprint);
-            this.context.currentSprint = sprintName;
+            await project.save();
+            await sprint.save();
 
             const prompt = `Un nouveau sprint '${sprintName}' a été créé pour le projet '${projectName}'. Quelles sont les meilleures pratiques à suivre pour ce sprint?`;
             const recommendations = await this.generateResponse(prompt);
@@ -134,7 +126,7 @@ class ProjectManagementBot {
 
     async getTeamStatus(projectName) {
         try {
-            const project = this.context.projects.get(projectName);
+            const project = await Project.findOne({ name: projectName });
             if (!project) {
                 throw new Error('Projet non trouvé');
             }
@@ -142,7 +134,7 @@ class ProjectManagementBot {
             const prompt = `
                 Analyse l'état actuel du projet '${projectName}':
                 - Nombre de tâches: ${project.tasks.length}
-                - Membres de l'équipe: ${project.teamMembers.join(', ') || 'Aucun membre'}
+                - Membres de l'équipe: ${project.teamMembers.map(member => member.name).join(', ') || 'Aucun membre'}
                 - Sprints en cours: ${project.sprints.length}
                 
                 Peux-tu fournir une analyse de la situation et des recommandations?
@@ -169,18 +161,20 @@ class ProjectManagementBot {
 
     async addTeamMember(projectName, memberName, role) {
         try {
-            const project = this.context.projects.get(projectName);
+            const project = await Project.findOne({ name: projectName });
             if (!project) {
                 throw new Error('Projet non trouvé');
             }
 
-            const member = {
+            const member = new TeamMember({
+                project: projectName,
                 name: memberName,
-                role,
-                joinedAt: new Date().toISOString()
-            };
+                role
+            });
 
             project.teamMembers.push(member);
+            await project.save();
+            await member.save();
 
             const prompt = `Un nouveau membre '${memberName}' avec le rôle '${role}' a rejoint le projet '${projectName}'. Quelles recommandations as-tu pour faciliter son intégration?`;
             const recommendations = await this.generateResponse(prompt);
