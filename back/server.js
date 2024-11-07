@@ -25,14 +25,14 @@ app.get('/', (req, res) => {
   res.send('Hello from Node.js + MongoDB !');
 });
 
-app.post('/create-project', async (req, res) => {
-  const { projectName, description } = req.body;
+app.post('/chatbot', async (req, res) => {
+  const { message } = req.body;
 
-  if (!projectName || !description) {
-    return res.status(400).json({ error: 'Le nom du projet et la description sont requis' });
+  if (!message) {
+    return res.status(400).json({ error: 'Le message est requis' });
   }
 
-  const result = await bot.createProject(projectName, description);
+  const result = await bot.sendMessage(message);
 
   if (result.status === 'success') {
     res.json(result);
@@ -41,68 +41,84 @@ app.post('/create-project', async (req, res) => {
   }
 });
 
-app.post('/add-task', async (req, res) => {
-  const { projectName, taskTitle, description, assignee, priority } = req.body;
+// app.post('/create-project', async (req, res) => {
+//   const { projectName, description } = req.body;
 
-  if (!projectName || !taskTitle || !description) {
-    return res.status(400).json({ error: 'Le nom du projet et le nom de la tâche sont requis' });
-  }
+//   if (!projectName || !description) {
+//     return res.status(400).json({ error: 'Le nom du projet et la description sont requis' });
+//   }
 
-  const result = await bot.addTask(projectName, taskTitle, description, assignee, priority);
+//   const result = await bot.createProject(projectName, description);
 
-  if (result.status === 'success') {
-    res.json(result);
-  } else {
-    res.status(500).json(result);
-  }
-});
+//   if (result.status === 'success') {
+//     res.json(result);
+//   } else {
+//     res.status(500).json(result);
+//   }
+// });
 
-app.post('/create-sprint', async (req, res) => {
-  const { projectName, sprintName, startDate, endDate } = req.body;
+// app.post('/add-task', async (req, res) => {
+//   const { projectName, taskTitle, description, assignee, priority } = req.body;
 
-  if (!projectName || !sprintName || !startDate || !endDate) {
-    return res.status(400).json({ error: 'Le nom du projet, le nom du sprint et la description sont requis' });
-  }
+//   if (!projectName || !taskTitle || !description) {
+//     return res.status(400).json({ error: 'Le nom du projet et le nom de la tâche sont requis' });
+//   }
 
-  const result = await bot.createSprint(projectName, sprintName, startDate, endDate);
+//   const result = await bot.addTask(projectName, taskTitle, description, assignee, priority);
 
-  if (result.status === 'success') {
-    res.json(result);
-  } else {
-    res.status(500).json(result);
-  }
-});
+//   if (result.status === 'success') {
+//     res.json(result);
+//   } else {
+//     res.status(500).json(result);
+//   }
+// });
 
-app.get('/get-team-status', async (req, res) => {
-  const { projectName } = req.body;
+// app.post('/create-sprint', async (req, res) => {
+//   const { projectName, sprintName, startDate, endDate } = req.body;
 
-  if (!projectName) {
-    return res.status(400).json({ error: 'Le nom du projet est requis' });
-  }
+//   if (!projectName || !sprintName || !startDate || !endDate) {
+//     return res.status(400).json({ error: 'Le nom du projet, le nom du sprint et la description sont requis' });
+//   }
 
-  const result = await bot.getTeamStatus(projectName);
+//   const result = await bot.createSprint(projectName, sprintName, startDate, endDate);
 
-  if (result.status === 'success') {
-    res.json(result);
-  } else {
-    res.status(500).json(result);
-  }
-});
+//   if (result.status === 'success') {
+//     res.json(result);
+//   } else {
+//     res.status(500).json(result);
+//   }
+// });
 
-app.post('/add-team-member', async (req, res) => {
-  const { projectName, memberName, role } = req.body;
+// app.get('/get-team-status', async (req, res) => {
+//   const { projectName } = req.body;
 
-  if (!projectName || !memberName || !role) {
-    return res.status(400).json({ error: 'Le nom du projet, le nom du membre et le rôle sont requis' });
-  }
+//   if (!projectName) {
+//     return res.status(400).json({ error: 'Le nom du projet est requis' });
+//   }
 
-  const result = await bot.addTeamMember(projectName, memberName, role);
+//   const result = await bot.getTeamStatus(projectName);
 
-  if (result.status === 'success') {
-    res.json(result);
-  } else {
-    res.status(500).json(result);
-  }
-});
+//   if (result.status === 'success') {
+//     res.json(result);
+//   } else {
+//     res.status(500).json(result);
+//   }
+// });
+
+// app.post('/add-team-member', async (req, res) => {
+//   const { projectName, memberName, role } = req.body;
+
+//   if (!projectName || !memberName || !role) {
+//     return res.status(400).json({ error: 'Le nom du projet, le nom du membre et le rôle sont requis' });
+//   }
+
+//   const result = await bot.addTeamMember(projectName, memberName, role);
+
+//   if (result.status === 'success') {
+//     res.json(result);
+//   } else {
+//     res.status(500).json(result);
+//   }
+// });
 
 app.listen(PORT, () => console.log(`Serveur backend en écoute sur le port ${PORT}`));

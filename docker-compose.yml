@@ -20,11 +20,21 @@ services:
     image: mehdirps/chatbot-mejusaem-front:latest
     build: ./front
     ports:
-      - "3000:80"
+      - "3000:3000"
     depends_on:
       - backend
     networks:
       - app-network
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - WDS_SOCKET_PORT=3000
+      - HOST=0.0.0.0     
+    stdin_open: true
+    tty: true
 
   mongo:
     image: mongo:latest

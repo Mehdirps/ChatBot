@@ -1,16 +1,19 @@
-# Utilise l'image officielle de Node.js 20.18 pour construire le frontend
-FROM node:20.18 AS build
+# Utilise l'image officielle de Node.js 20.18 pour le développement
+FROM node:20.18
 
 WORKDIR /app
+
+# Copier les fichiers package.json et package-lock.json dans le répertoire de travail
 COPY package*.json ./
+
+# Installer les dépendances
 RUN npm install
+
+# Copier le reste des fichiers de l'application dans le répertoire de travail
 COPY . .
 
-# Construction du projet
-RUN npm run build
+# Expose le port 3000 pour le serveur de développement React
+EXPOSE 3000
 
-# Utilise Nginx pour servir les fichiers en production
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Commande pour démarrer le serveur de développement
+CMD ["npm", "start"]
